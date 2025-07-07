@@ -5,6 +5,11 @@ Behavioural and pupillometry analysis of Kakaei et.al. 2025.
 
 Kakaei E., Schlecht A., Hauser T.U. (2025) Increased baseline pupil size enhances uncertainty avoidance in decision making.*Under review*
 
+## Requirements ##
+
+- MATLAB (tested on v24.1)
+- Statistics and Machine Learning Toolbox (tested on v24.1)
+
 ## How to use ##
 - You can get the data under [OSF](https://osf.io/pq8we/?view_only=60aa63ae21f241f2a5acda1ed682a06a)
 - To get the results of the behavioural analysis run Behaviour_analysis(path_to_data).
