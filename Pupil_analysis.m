@@ -53,7 +53,7 @@ for exper = 1:2 % experiment counter
         lme = fitlme(tmpT,model); % fit the linear model
         pval_model(nt) = lme.Coefficients.pValue(2); % significance of Beta_Certainty
     end
-
+    fprintf('\n')
     % plot
     clrs = [0 0.2 0.9;0.7 0 0]; % figure colours
 
@@ -154,7 +154,7 @@ for exper = 1:2 % experiment counter
         longTcert.time(ii:(ii+w-1)) = iit; % time points
         ii = ii+w;
     end
-
+    disp(['Figure 2 - Experiment ' num2str(exper)])
     lme = fitlme(longTcert,model) % fit the linear model
 
     pval_model_windowed_info = lme.Coefficients.pValue(2); % significance of Beta_Certainty
@@ -176,7 +176,7 @@ for exper = 1:2 % experiment counter
         lme = fitlme(tmpT,model); % fit the linear model
         pval_model(nt) = lme.Coefficients.pValue(2); % significance of Beta_Certainty
     end
-
+    fprintf('\n')
     % plot
     clrs = [0 0.2 0.9;0.7 0 0]; % figure colours
 
@@ -212,6 +212,76 @@ for exper = 1:2 % experiment counter
     ylabel('mean pupil size (Z-scored)')
     title(['Experiment ' num2str(exper)])
     my_axis_style
+     %% Figure3 - subplot Time window [-1 0]
+    TOI = [-1 0]; % time window of interest
+    tmpT = Ch1_data(ihv| ilv,:); % only with certainty disparity
+
+    tt = -3:1e-3:10; tt(end) = []; % time vector
+
+    iit1 = find(tt<TOI(1),1,'last'); % first time point of interest
+    iit2 = find(tt<TOI(2),1,'last'); % last time point of interest
+    MPup = mean(Alldata(iit1:iit2,ihv | ilv),1)'; % mean_pupil size within TOI
+
+    VAL = (tmpT.Value); % certainty levels
+
+    MP_TOI = nan(2,numel(subs));
+    for ns = 1:numel(subs)
+        tmp1 = MPup(VAL==-1 & ismember(tmpT.ID,subs(ns)),:);
+        tmp2 = MPup(VAL==1 & ismember(tmpT.ID,subs(ns)),:);
+
+        MP_TOI(1,ns) = mean(tmp1,"omitmissing"); % average over trials
+        MP_TOI(2,ns) = mean(tmp2,"omitmissing"); % average over trials
+    end
+
+    f301 = figure(301);
+    subplot(1,2,exper)
+    hold on
+    b = bar(-0.22,mean(MP_TOI(1,:),2),0.4); % average over subjects
+    b.FaceColor = clrs(1,:);
+    b.FaceAlpha = 1;
+    b.EdgeColor = 'k';
+    errorbar(-0.22,mean(MP_TOI(1,:),2),std(MP_TOI(1,:),0,2)/sqrt(size(MP_TOI,2)),'LineWidth',2,'Color','k') % SEM over subjects
+
+    b = bar(0.22,mean(MP_TOI(2,:),2),0.4);
+    b.FaceColor = clrs(2,:);
+    b.FaceAlpha = 1;
+    b.EdgeColor = 'k';
+    errorbar(0.22,mean(MP_TOI(2,:),2),std(MP_TOI(2,:),0,2)/sqrt(size(MP_TOI,2)),'LineWidth',2,'Color','k')
+    lg = legend('Low value','SEM','High value','Location','northeast');
+    lg.Box = 'off';
+    lg.AutoUpdate = 'off';
+    ylabel('mean pupil size (Z-scored)')
+    xticks([]);
+    my_axis_style
+    title(['Experiment ' num2str(exper)])
+    ylim([-0.7 -0.2])
+    yticks(-0.6:0.2:-0.2)
+
+    % linear mixed-model
+    modeled_indicestmp = iit1:100:iit2; % model every 100th point
+    w = length(modeled_indicestmp); % window size
+
+    % certainty based, controlled for autocorr
+    model = 'pup~Value+(1|ID)+(1|time)';
+    tmpT = Ch1_data(ihv | ilv,:); % behaviour data only with certainty disparity
+    dat = Alldata   (:,ihv | ilv); % pupil data only with certainty disparity
+    tmpT.pup = nan(size(tmpT,1),1);
+    tmpT.time = nan(size(tmpT,1),1);
+    longTcert = repmat(tmpT,w,1); % initialise (will be overwritten)
+
+    ii = 1;
+    for ntr = 1:size(tmpT,1) % over trials
+        iit = modeled_indicestmp;
+        longTcert(ii:(ii+w-1),:) = repmat(tmpT(ntr,:),w,1); % every parameter is repeated except the pupil data
+        longTcert.pup(ii:(ii+w-1)) = dat(iit,ntr); % aggrigate data of the window
+        longTcert.time(ii:(ii+w-1)) = iit; % time points
+        ii = ii+w;
+    end
+    disp(['Figure 3 - Experiment ' num2str(exper)])
+    lme = fitlme(longTcert,model) % fit the linear model
+
+    pval_model_windowed_info = lme.Coefficients.pValue(2); % significance of Beta_Certainty
+    %%
 end
 end
 %% functions
